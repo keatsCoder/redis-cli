@@ -10,6 +10,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Pipeline;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @Author: keats_coder
@@ -56,7 +60,7 @@ public class JedisConnectionDemo {
     public void testConnectionNotClose() {
         // 创建连接池
         JedisPoolConfig poolConfig = new JedisPoolConfig();
-        poolConfig.setMaxWaitMillis(5L); // 等待Jedis连接超时时间
+        poolConfig.setMaxWaitMillis(5000L); // 等待Jedis连接超时时间
         JedisPool jedisPool = new JedisPool(poolConfig, host, port);
 
         try {
@@ -74,7 +78,7 @@ public class JedisConnectionDemo {
     public void testConnectionWithException() {
         // 创建连接池
         JedisPoolConfig poolConfig = new JedisPoolConfig();
-        poolConfig.setMaxWaitMillis(5L); // 等待Jedis连接超时时间
+        poolConfig.setMaxWaitMillis(5000L); // 等待Jedis连接超时时间
         JedisPool jedisPool = new JedisPool(poolConfig, host, port);
 
         for (int i = 1; i <= 8; i++) {
@@ -93,5 +97,23 @@ public class JedisConnectionDemo {
         }
         // 第9次无法获取连接
         Jedis jedis = jedisPool.getResource();
+    }
+
+    @Test
+    public void testPipeline() {
+        // 创建连接池
+        JedisPool jedisPool = new JedisPool(host, port);
+        try (Jedis jedis = jedisPool.getResource()){
+            Pipeline pipelined = jedis.pipelined();
+            // doSomething 获取 keys
+            List<String> keys = new ArrayList<>();
+
+            // pipelined 添加命令
+            for (String key : keys) {
+                pipelined.del(key);
+            }
+            // 执行命令
+            pipelined.sync();
+        }
     }
 }
